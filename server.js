@@ -2,13 +2,57 @@ const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const cors = require('cors');
 const path = require('path');
+const swaggerUi = require('swagger-ui-express');
+const swaggerJsdoc = require('swagger-jsdoc');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Swagger configuration
+const swaggerOptions = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Fire Monitoring API',
+      version: '2.0.0',
+      description: 'Cyprus Fire Monitoring System - Real-time fire incident tracking and management API with GeoJSON support',
+      contact: {
+        name: 'API Support',
+        email: 'support@firemonitoring.cy'
+      }
+    },
+    servers: [
+      {
+        url: 'https://fire-monitoring-backend-txyh.onrender.com',
+        description: 'Production server'
+      },
+      {
+        url: 'http://localhost:3001',
+        description: 'Development server'
+      }
+    ],
+    tags: [
+      {
+        name: 'Fires',
+        description: 'Fire incident management endpoints'
+      }
+    ]
+  },
+  apis: ['./server.js']
+};
+
+const swaggerSpec = swaggerJsdoc(swaggerOptions);
+
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Swagger UI
+app.use('/', swaggerUi.serve);
+app.get('/', swaggerUi.setup(swaggerSpec, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'Fire Monitoring API Documentation'
+}));
 
 // Database setup
 const dbPath = path.join(__dirname, 'fires.db');
@@ -244,25 +288,93 @@ function rowToGeoJSON(row) {
 
 // Routes
 
-// Health check
-app.get('/', (req, res) => {
-  res.json({
-    message: 'Fire Monitoring API',
-    version: '2.0.0',
-    format: 'GeoJSON',
-    endpoints: {
-      fires: {
-        getAll: 'GET /api/fires',
-        getActive: 'GET /api/fires?fire_status=active',
-        getById: 'GET /api/fires/:id',
-        create: 'POST /api/fires',
-        update: 'PATCH /api/fires/:id',
-        delete: 'DELETE /api/fires/:id'
-      }
-    }
-  });
-});
-
+/**
+ * @swagger
+ * /api/fires:
+ *   get:
+ *     summary: Get all fire incidents
+ *     description: Retrieve all fire incidents in GeoJSON FeatureCollection format. Optionally filter by fire status.
+ *     tags: [Fires]
+ *     parameters:
+ *       - in: query
+ *         name: fire_status
+ *         schema:
+ *           type: string
+ *           enum: [active, controlled, threat]
+ *         description: Filter fires by status
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [active, controlled, threat]
+ *         description: Alternative parameter for filtering by status
+ *     responses:
+ *       200:
+ *         description: GeoJSON FeatureCollection of fire incidents
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 type:
+ *                   type: string
+ *                   example: FeatureCollection
+ *                 features:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       type:
+ *                         type: string
+ *                         example: Feature
+ *                       geometry:
+ *                         type: object
+ *                         properties:
+ *                           type:
+ *                             type: string
+ *                             example: Point
+ *                           coordinates:
+ *                             type: array
+ *                             items:
+ *                               type: number
+ *                             example: [33.0437, 34.6857]
+ *                       properties:
+ *                         type: object
+ *                         properties:
+ *                           fire_status:
+ *                             type: string
+ *                             enum: [active, controlled, threat]
+ *                           fire_type:
+ *                             type: string
+ *                             example: forest
+ *                           fire_intensity:
+ *                             type: number
+ *                             example: 450
+ *                           fire_size:
+ *                             type: number
+ *                             description: Fire size in hectares
+ *                             example: 12.5
+ *                           confidence:
+ *                             type: integer
+ *                             example: 92
+ *                           temperature:
+ *                             type: number
+ *                             example: 35
+ *                           humidity:
+ *                             type: integer
+ *                             example: 18
+ *                           wind_speed:
+ *                             type: number
+ *                             example: 25
+ *                           nearest_village:
+ *                             type: string
+ *                             example: Troodos
+ *                           risk_to_settlements:
+ *                             type: string
+ *                             enum: [low, medium, high]
+ *       500:
+ *         description: Database error
+ */
 // GET all fires in GeoJSON format (with optional status filter)
 app.get('/api/fires', (req, res) => {
   const { fire_status, status } = req.query;
@@ -292,6 +404,28 @@ app.get('/api/fires', (req, res) => {
   });
 });
 
+/**
+ * @swagger
+ * /api/fires/{id}:
+ *   get:
+ *     summary: Get fire incident by ID
+ *     description: Retrieve a single fire incident by its ID in GeoJSON Feature format
+ *     tags: [Fires]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Fire incident ID
+ *     responses:
+ *       200:
+ *         description: GeoJSON Feature representing the fire incident
+ *       404:
+ *         description: Fire not found
+ *       500:
+ *         description: Database error
+ */
 // GET single fire by ID in GeoJSON format
 app.get('/api/fires/:id', (req, res) => {
   const { id } = req.params;
@@ -310,6 +444,93 @@ app.get('/api/fires/:id', (req, res) => {
   });
 });
 
+/**
+ * @swagger
+ * /api/fires:
+ *   post:
+ *     summary: Create new fire incident
+ *     description: Report a new fire incident with location and optional detailed information
+ *     tags: [Fires]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - latitude
+ *               - longitude
+ *             properties:
+ *               latitude:
+ *                 type: number
+ *                 description: Latitude (-90 to 90)
+ *                 example: 34.6857
+ *               longitude:
+ *                 type: number
+ *                 description: Longitude (-180 to 180)
+ *                 example: 33.0437
+ *               fire_status:
+ *                 type: string
+ *                 enum: [active, controlled, threat]
+ *                 default: active
+ *               fire_type:
+ *                 type: string
+ *                 example: wildfire
+ *               fire_intensity:
+ *                 type: number
+ *                 default: 100
+ *               fire_size:
+ *                 type: number
+ *                 description: Fire size in hectares
+ *                 default: 1.0
+ *               confidence:
+ *                 type: integer
+ *                 default: 85
+ *               temperature:
+ *                 type: number
+ *                 default: 30
+ *               humidity:
+ *                 type: integer
+ *                 default: 25
+ *               wind_speed:
+ *                 type: number
+ *                 default: 10
+ *               wind_direction:
+ *                 type: integer
+ *                 default: 180
+ *               district:
+ *                 type: string
+ *                 example: Limassol
+ *               nearest_village:
+ *                 type: string
+ *                 example: Troodos
+ *               risk_to_settlements:
+ *                 type: string
+ *                 enum: [low, medium, high]
+ *                 default: medium
+ *               reporter_name:
+ *                 type: string
+ *               reporter_contact:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Fire incident created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: Validation error
+ *       500:
+ *         description: Database error
+ */
 // POST new fire report
 app.post('/api/fires', (req, res) => {
   const {
@@ -412,6 +633,56 @@ app.post('/api/fires', (req, res) => {
   });
 });
 
+/**
+ * @swagger
+ * /api/fires/{id}:
+ *   patch:
+ *     summary: Update fire incident
+ *     description: Update any field of an existing fire incident. All fields are optional. The last_update timestamp is automatically updated.
+ *     tags: [Fires]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Fire incident ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               fire_status:
+ *                 type: string
+ *                 enum: [active, controlled, threat]
+ *               fire_intensity:
+ *                 type: number
+ *               fire_size:
+ *                 type: number
+ *               temperature:
+ *                 type: number
+ *               wind_speed:
+ *                 type: number
+ *               evacuation_status:
+ *                 type: string
+ *               firefighters:
+ *                 type: integer
+ *               vehicles:
+ *                 type: integer
+ *               aircraft:
+ *                 type: integer
+ *     responses:
+ *       200:
+ *         description: Fire incident updated successfully
+ *       400:
+ *         description: No valid fields to update
+ *       404:
+ *         description: Fire not found
+ *       500:
+ *         description: Database error
+ */
 // UPDATE fire (any field)
 app.patch('/api/fires/:id', (req, res) => {
   const { id } = req.params;
@@ -472,6 +743,37 @@ app.patch('/api/fires/:id', (req, res) => {
   });
 });
 
+/**
+ * @swagger
+ * /api/fires/{id}:
+ *   delete:
+ *     summary: Delete fire incident
+ *     description: Permanently delete a fire incident from the database
+ *     tags: [Fires]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Fire incident ID
+ *     responses:
+ *       200:
+ *         description: Fire incident deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *       404:
+ *         description: Fire not found
+ *       500:
+ *         description: Database error
+ */
 // DELETE fire
 app.delete('/api/fires/:id', (req, res) => {
   const { id } = req.params;
