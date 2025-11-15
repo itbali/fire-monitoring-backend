@@ -9,7 +9,7 @@ const https = require('https');
  * @param {Array<number>} location - [lat, lng] of the notification location
  * @returns {Promise<Object>} - Response from Telegram API
  */
-async function sendTelegramNotification(botToken, chatId, message, evacuationPoints = [], location = null) {
+export async function sendTelegramNotification(botToken, chatId, message, evacuationPoints = [], location = null) {
   if (!botToken || !chatId) {
     throw new Error('Telegram bot token and chat ID are required');
   }

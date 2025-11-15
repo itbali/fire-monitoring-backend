@@ -4,6 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const swaggerUi = require('swagger-ui-express');
 const swaggerJsdoc = require('swagger-jsdoc');
+const sendTelegramNotification = require('./telegramService').sendTelegramNotification;
 
 const app = express();
 const PORT = process.env.PORT || 3001;
