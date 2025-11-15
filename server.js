@@ -35,619 +35,8 @@ const swaggerOptions = {
       {
         name: 'Fires',
         description: 'Fire incident management endpoints'
-      },
-      {
-        name: 'Notifications',
-        description: 'Emergency notification endpoints'
-      },
-      {
-        name: 'WhatsApp',
-        description: 'WhatsApp integration and status endpoints'
       }
-    ],
-    components: {
-      schemas: {
-        ResourcesOnSite: {
-          type: 'object',
-          properties: {
-            firefighters: {
-              type: 'integer',
-              description: 'Number of firefighters on site',
-              example: 50
-            },
-            vehicles: {
-              type: 'integer',
-              description: 'Number of vehicles on site',
-              example: 10
-            },
-            aircraft: {
-              type: 'integer',
-              description: 'Number of aircraft on site',
-              example: 2
-            }
-          }
-        },
-        FireProperties: {
-          type: 'object',
-          properties: {
-            timestamp_detected: {
-              type: 'string',
-              format: 'date-time',
-              description: 'When the fire was first detected',
-              example: '2024-01-15T10:30:00Z'
-            },
-            last_update: {
-              type: 'string',
-              format: 'date-time',
-              description: 'Last update timestamp',
-              example: '2024-01-15T14:20:00Z'
-            },
-            fire_status: {
-              type: 'string',
-              enum: ['active', 'controlled', 'threat'],
-              description: 'Current status of the fire',
-              example: 'active'
-            },
-            fire_type: {
-              type: 'string',
-              description: 'Type of fire',
-              example: 'wildfire'
-            },
-            fire_intensity: {
-              type: 'number',
-              description: 'Fire intensity measurement',
-              example: 450
-            },
-            fire_size: {
-              type: 'number',
-              description: 'Fire size in hectares',
-              example: 12.5
-            },
-            confidence: {
-              type: 'integer',
-              description: 'Detection confidence percentage',
-              example: 92,
-              minimum: 0,
-              maximum: 100
-            },
-            fuel_type: {
-              type: 'string',
-              description: 'Type of fuel burning',
-              example: 'mixed_forest'
-            },
-            terrain_type: {
-              type: 'string',
-              description: 'Type of terrain',
-              example: 'mountain'
-            },
-            slope: {
-              type: 'number',
-              description: 'Terrain slope in degrees',
-              example: 25
-            },
-            temperature: {
-              type: 'number',
-              description: 'Ambient temperature in Celsius',
-              example: 35
-            },
-            humidity: {
-              type: 'integer',
-              description: 'Relative humidity percentage',
-              example: 18,
-              minimum: 0,
-              maximum: 100
-            },
-            wind_speed: {
-              type: 'number',
-              description: 'Wind speed in km/h',
-              example: 25
-            },
-            wind_direction: {
-              type: 'integer',
-              description: 'Wind direction in degrees',
-              example: 180,
-              minimum: 0,
-              maximum: 360
-            },
-            wind_type: {
-              type: 'string',
-              description: 'Type of wind (local naming)',
-              example: 'meltemi'
-            },
-            agency_in_charge: {
-              type: 'string',
-              description: 'Agency handling the incident',
-              example: 'Cyprus Fire Service'
-            },
-            response_level: {
-              type: 'string',
-              description: 'Level of response mobilized',
-              example: 'district'
-            },
-            resources_on_site: {
-              $ref: '#/components/schemas/ResourcesOnSite'
-            },
-            evacuation_status: {
-              type: 'string',
-              description: 'Evacuation status',
-              example: 'partial'
-            },
-            district: {
-              type: 'string',
-              description: 'District where fire is located',
-              example: 'Limassol'
-            },
-            nearest_village: {
-              type: 'string',
-              description: 'Nearest village to the fire',
-              example: 'Troodos'
-            },
-            distance_to_village: {
-              type: 'number',
-              description: 'Distance to nearest village in km',
-              example: 2.5
-            },
-            risk_to_settlements: {
-              type: 'string',
-              enum: ['low', 'medium', 'high'],
-              description: 'Risk level to nearby settlements',
-              example: 'high'
-            },
-            reporter_name: {
-              type: 'string',
-              description: 'Name of person reporting the fire',
-              example: 'John Doe'
-            },
-            reporter_contact: {
-              type: 'string',
-              description: 'Contact info of reporter',
-              example: '+357 99 123456'
-            }
-          }
-        },
-        GeoJSONPoint: {
-          type: 'object',
-          required: ['type', 'coordinates'],
-          properties: {
-            type: {
-              type: 'string',
-              enum: ['Point'],
-              example: 'Point'
-            },
-            coordinates: {
-              type: 'array',
-              items: {
-                type: 'number'
-              },
-              minItems: 2,
-              maxItems: 2,
-              description: 'Coordinates as [longitude, latitude]',
-              example: [33.0437, 34.6857]
-            }
-          }
-        },
-        FireFeature: {
-          type: 'object',
-          required: ['type', 'geometry', 'properties'],
-          description: 'GeoJSON Feature representing a fire incident',
-          properties: {
-            type: {
-              type: 'string',
-              enum: ['Feature'],
-              example: 'Feature'
-            },
-            geometry: {
-              $ref: '#/components/schemas/GeoJSONPoint'
-            },
-            properties: {
-              $ref: '#/components/schemas/FireProperties'
-            }
-          }
-        },
-        FireFeatureCollection: {
-          type: 'object',
-          required: ['type', 'features'],
-          description: 'GeoJSON FeatureCollection of fire incidents',
-          properties: {
-            type: {
-              type: 'string',
-              enum: ['FeatureCollection'],
-              example: 'FeatureCollection'
-            },
-            features: {
-              type: 'array',
-              items: {
-                $ref: '#/components/schemas/FireFeature'
-              }
-            }
-          }
-        },
-        CreateFireDto: {
-          type: 'object',
-          required: ['latitude', 'longitude'],
-          properties: {
-            latitude: {
-              type: 'number',
-              description: 'Latitude (-90 to 90)',
-              example: 34.6857,
-              minimum: -90,
-              maximum: 90
-            },
-            longitude: {
-              type: 'number',
-              description: 'Longitude (-180 to 180)',
-              example: 33.0437,
-              minimum: -180,
-              maximum: 180
-            },
-            fire_status: {
-              type: 'string',
-              enum: ['active', 'controlled', 'threat'],
-              default: 'active'
-            },
-            fire_type: {
-              type: 'string',
-              example: 'wildfire'
-            },
-            fire_intensity: {
-              type: 'number',
-              default: 100
-            },
-            fire_size: {
-              type: 'number',
-              description: 'Fire size in hectares',
-              default: 1.0
-            },
-            confidence: {
-              type: 'integer',
-              minimum: 0,
-              maximum: 100,
-              default: 85
-            },
-            fuel_type: {
-              type: 'string',
-              default: 'mixed_forest'
-            },
-            terrain_type: {
-              type: 'string',
-              default: 'mountain'
-            },
-            slope: {
-              type: 'number',
-              default: 15
-            },
-            temperature: {
-              type: 'number',
-              default: 30
-            },
-            humidity: {
-              type: 'integer',
-              minimum: 0,
-              maximum: 100,
-              default: 25
-            },
-            wind_speed: {
-              type: 'number',
-              default: 10
-            },
-            wind_direction: {
-              type: 'integer',
-              minimum: 0,
-              maximum: 360,
-              default: 180
-            },
-            wind_type: {
-              type: 'string',
-              default: 'meltemi'
-            },
-            agency_in_charge: {
-              type: 'string',
-              default: 'Cyprus Fire Service'
-            },
-            response_level: {
-              type: 'string',
-              default: 'district'
-            },
-            firefighters: {
-              type: 'integer',
-              default: 20
-            },
-            vehicles: {
-              type: 'integer',
-              default: 5
-            },
-            aircraft: {
-              type: 'integer',
-              default: 1
-            },
-            evacuation_status: {
-              type: 'string',
-              default: 'none'
-            },
-            district: {
-              type: 'string',
-              example: 'Limassol'
-            },
-            nearest_village: {
-              type: 'string',
-              example: 'Troodos'
-            },
-            distance_to_village: {
-              type: 'number',
-              default: 1.5
-            },
-            risk_to_settlements: {
-              type: 'string',
-              enum: ['low', 'medium', 'high'],
-              default: 'medium'
-            },
-            reporter_name: {
-              type: 'string',
-              description: 'Name of person reporting'
-            },
-            reporter_contact: {
-              type: 'string',
-              description: 'Contact information'
-            }
-          }
-        },
-        UpdateFireDto: {
-          type: 'object',
-          description: 'Update fire incident - all fields are optional',
-          properties: {
-            fire_status: {
-              type: 'string',
-              enum: ['active', 'controlled', 'threat']
-            },
-            fire_intensity: {
-              type: 'number'
-            },
-            fire_size: {
-              type: 'number',
-              description: 'Fire size in hectares'
-            },
-            temperature: {
-              type: 'number'
-            },
-            humidity: {
-              type: 'integer',
-              minimum: 0,
-              maximum: 100
-            },
-            wind_speed: {
-              type: 'number'
-            },
-            wind_direction: {
-              type: 'integer',
-              minimum: 0,
-              maximum: 360
-            },
-            firefighters: {
-              type: 'integer'
-            },
-            vehicles: {
-              type: 'integer'
-            },
-            aircraft: {
-              type: 'integer'
-            },
-            evacuation_status: {
-              type: 'string'
-            },
-            risk_to_settlements: {
-              type: 'string',
-              enum: ['low', 'medium', 'high']
-            }
-          }
-        },
-        CreateFireResponse: {
-          type: 'object',
-          properties: {
-            success: {
-              type: 'boolean',
-              example: true
-            },
-            message: {
-              type: 'string',
-              example: 'Fire report created successfully'
-            },
-            data: {
-              $ref: '#/components/schemas/FireFeature'
-            }
-          }
-        },
-        UpdateFireResponse: {
-          type: 'object',
-          properties: {
-            success: {
-              type: 'boolean',
-              example: true
-            },
-            message: {
-              type: 'string',
-              example: 'Fire updated successfully'
-            },
-            data: {
-              $ref: '#/components/schemas/FireFeature'
-            }
-          }
-        },
-        DeleteFireResponse: {
-          type: 'object',
-          properties: {
-            success: {
-              type: 'boolean',
-              example: true
-            },
-            message: {
-              type: 'string',
-              example: 'Fire deleted successfully'
-            }
-          }
-        },
-        ErrorResponse: {
-          type: 'object',
-          properties: {
-            error: {
-              type: 'string',
-              description: 'Error message',
-              example: 'Database error'
-            }
-          }
-        },
-        LatLng: {
-          type: 'array',
-          items: {
-            type: 'number'
-          },
-          minItems: 2,
-          maxItems: 2,
-          description: 'Coordinates as [latitude, longitude]',
-          example: [34.6857, 33.0437]
-        },
-        SendNotificationDto: {
-          type: 'object',
-          required: ['message', 'evacuationPoints'],
-          properties: {
-            message: {
-              type: 'string',
-              description: 'Notification message to send',
-              example: 'Emergency evacuation required. Fire approaching your area.'
-            },
-            evacuationPoints: {
-              type: 'array',
-              items: {
-                $ref: '#/components/schemas/LatLng'
-              },
-              description: 'List of safe evacuation points',
-              example: [[34.6738515, 33.0567334], [34.6528625, 32.9975162]]
-            },
-            location: {
-              allOf: [
-                {
-                  $ref: '#/components/schemas/LatLng'
-                }
-              ],
-              nullable: true,
-              description: 'Optional fire location',
-              example: [34.6857, 33.0437]
-            }
-          }
-        },
-        NotificationResult: {
-          type: 'object',
-          properties: {
-            telegram: {
-              type: 'object',
-              nullable: true,
-              description: 'Telegram send result'
-            },
-            whatsapp: {
-              type: 'object',
-              nullable: true,
-              description: 'WhatsApp send result'
-            },
-            errors: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  service: {
-                    type: 'string',
-                    example: 'telegram'
-                  },
-                  error: {
-                    type: 'string',
-                    example: 'Failed to send message'
-                  }
-                }
-              }
-            }
-          }
-        },
-        NotificationResponse: {
-          type: 'object',
-          properties: {
-            success: {
-              type: 'boolean',
-              example: true
-            },
-            message: {
-              type: 'string',
-              example: 'Notifications sent successfully'
-            },
-            results: {
-              $ref: '#/components/schemas/NotificationResult'
-            }
-          }
-        },
-        WhatsAppStatusResponse: {
-          type: 'object',
-          properties: {
-            success: {
-              type: 'boolean',
-              example: true
-            },
-            status: {
-              type: 'object',
-              properties: {
-                hasClient: {
-                  type: 'boolean',
-                  description: 'Whether WhatsApp client is initialized'
-                },
-                isLoggedIn: {
-                  type: 'boolean',
-                  description: 'Whether WhatsApp is authenticated'
-                }
-              }
-            }
-          }
-        },
-        WhatsAppQRResponse: {
-          type: 'object',
-          properties: {
-            success: {
-              type: 'boolean',
-              example: true
-            },
-            qrCode: {
-              type: 'string',
-              description: 'QR code string for WhatsApp authentication',
-              nullable: true
-            },
-            message: {
-              type: 'string',
-              description: 'Status message when QR code is not available',
-              nullable: true
-            }
-          }
-        },
-        InitializeWhatsAppDto: {
-          type: 'object',
-          properties: {
-            groupName: {
-              type: 'string',
-              description: 'WhatsApp group name to send notifications to',
-              example: 'Fire Emergency Alerts',
-              nullable: true
-            }
-          }
-        },
-        InitializeWhatsAppResponse: {
-          type: 'object',
-          properties: {
-            success: {
-              type: 'boolean',
-              example: true
-            },
-            message: {
-              type: 'string',
-              example: 'WhatsApp client initialized'
-            }
-          }
-        }
-      }
-    }
+    ]
   },
   apis: ['./server.js']
 };
@@ -944,13 +333,66 @@ app.get('/', (req, res) => {
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/FireFeatureCollection'
+ *               type: object
+ *               properties:
+ *                 type:
+ *                   type: string
+ *                   example: FeatureCollection
+ *                 features:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       type:
+ *                         type: string
+ *                         example: Feature
+ *                       geometry:
+ *                         type: object
+ *                         properties:
+ *                           type:
+ *                             type: string
+ *                             example: Point
+ *                           coordinates:
+ *                             type: array
+ *                             items:
+ *                               type: number
+ *                             example: [33.0437, 34.6857]
+ *                       properties:
+ *                         type: object
+ *                         properties:
+ *                           fire_status:
+ *                             type: string
+ *                             enum: [active, controlled, threat]
+ *                           fire_type:
+ *                             type: string
+ *                             example: forest
+ *                           fire_intensity:
+ *                             type: number
+ *                             example: 450
+ *                           fire_size:
+ *                             type: number
+ *                             description: Fire size in hectares
+ *                             example: 12.5
+ *                           confidence:
+ *                             type: integer
+ *                             example: 92
+ *                           temperature:
+ *                             type: number
+ *                             example: 35
+ *                           humidity:
+ *                             type: integer
+ *                             example: 18
+ *                           wind_speed:
+ *                             type: number
+ *                             example: 25
+ *                           nearest_village:
+ *                             type: string
+ *                             example: Troodos
+ *                           risk_to_settlements:
+ *                             type: string
+ *                             enum: [low, medium, high]
  *       500:
  *         description: Database error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
  */
 // GET all fires in GeoJSON format (with optional status filter)
 app.get('/api/fires', (req, res) => {
@@ -998,22 +440,10 @@ app.get('/api/fires', (req, res) => {
  *     responses:
  *       200:
  *         description: GeoJSON Feature representing the fire incident
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/FireFeature'
  *       404:
  *         description: Fire not found
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
  *       500:
  *         description: Database error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
  */
 // GET single fire by ID in GeoJSON format
 app.get('/api/fires/:id', (req, res) => {
@@ -1045,26 +475,80 @@ app.get('/api/fires/:id', (req, res) => {
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/CreateFireDto'
+ *             type: object
+ *             required:
+ *               - latitude
+ *               - longitude
+ *             properties:
+ *               latitude:
+ *                 type: number
+ *                 description: Latitude (-90 to 90)
+ *                 example: 34.6857
+ *               longitude:
+ *                 type: number
+ *                 description: Longitude (-180 to 180)
+ *                 example: 33.0437
+ *               fire_status:
+ *                 type: string
+ *                 enum: [active, controlled, threat]
+ *                 default: active
+ *               fire_type:
+ *                 type: string
+ *                 example: wildfire
+ *               fire_intensity:
+ *                 type: number
+ *                 default: 100
+ *               fire_size:
+ *                 type: number
+ *                 description: Fire size in hectares
+ *                 default: 1.0
+ *               confidence:
+ *                 type: integer
+ *                 default: 85
+ *               temperature:
+ *                 type: number
+ *                 default: 30
+ *               humidity:
+ *                 type: integer
+ *                 default: 25
+ *               wind_speed:
+ *                 type: number
+ *                 default: 10
+ *               wind_direction:
+ *                 type: integer
+ *                 default: 180
+ *               district:
+ *                 type: string
+ *                 example: Limassol
+ *               nearest_village:
+ *                 type: string
+ *                 example: Troodos
+ *               risk_to_settlements:
+ *                 type: string
+ *                 enum: [low, medium, high]
+ *                 default: medium
+ *               reporter_name:
+ *                 type: string
+ *               reporter_contact:
+ *                 type: string
  *     responses:
  *       201:
  *         description: Fire incident created successfully
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/CreateFireResponse'
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
  *       400:
  *         description: Validation error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
  *       500:
  *         description: Database error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
  */
 // POST new fire report
 app.post('/api/fires', (req, res) => {
@@ -1187,32 +671,36 @@ app.post('/api/fires', (req, res) => {
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/UpdateFireDto'
+ *             type: object
+ *             properties:
+ *               fire_status:
+ *                 type: string
+ *                 enum: [active, controlled, threat]
+ *               fire_intensity:
+ *                 type: number
+ *               fire_size:
+ *                 type: number
+ *               temperature:
+ *                 type: number
+ *               wind_speed:
+ *                 type: number
+ *               evacuation_status:
+ *                 type: string
+ *               firefighters:
+ *                 type: integer
+ *               vehicles:
+ *                 type: integer
+ *               aircraft:
+ *                 type: integer
  *     responses:
  *       200:
  *         description: Fire incident updated successfully
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/UpdateFireResponse'
  *       400:
  *         description: No valid fields to update
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
  *       404:
  *         description: Fire not found
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
  *       500:
  *         description: Database error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
  */
 // UPDATE fire (any field)
 app.patch('/api/fires/:id', (req, res) => {
@@ -1294,19 +782,16 @@ app.patch('/api/fires/:id', (req, res) => {
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/DeleteFireResponse'
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
  *       404:
  *         description: Fire not found
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
  *       500:
  *         description: Database error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
  */
 // DELETE fire
 app.delete('/api/fires/:id', (req, res) => {
@@ -1336,43 +821,9 @@ app.listen(PORT, () => {
 });
 
 // Notification endpoints
-
-/**
- * @swagger
- * /api/notifications/send:
- *   post:
- *     summary: Send emergency notification
- *     description: Send evacuation notification via Telegram and/or WhatsApp with safe evacuation points
- *     tags: [Notifications]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/SendNotificationDto'
- *     responses:
- *       200:
- *         description: Notification sent successfully (at least one service succeeded)
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/NotificationResponse'
- *       400:
- *         description: Validation error - invalid message or evacuation points
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- *       500:
- *         description: All notification services failed
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- */
 app.post('/api/notifications/send', async (req, res) => {
     try {
-        const { message, evacuationPoints, location } = req.body;
+        const { message, evacuationPoints = [], location = null } = req.body;
 
         // Validation
         if (!message || typeof message !== 'string' || !message.trim()) {
@@ -1381,25 +832,21 @@ app.post('/api/notifications/send', async (req, res) => {
             });
         }
 
-        if (!evacuationPoints || !Array.isArray(evacuationPoints) || evacuationPoints.length === 0) {
-            return res.status(400).json({
-                error: 'At least one evacuation point is required'
-            });
-        }
-
-        // Validate evacuation points format
-        for (const point of evacuationPoints) {
-            if (!Array.isArray(point) || point.length !== 2) {
-                return res.status(400).json({
-                    error: 'Each evacuation point must be an array of [lat, lng]'
-                });
-            }
-            const [lat, lng] = point;
-            if (typeof lat !== 'number' || typeof lng !== 'number' ||
-                lat < -90 || lat > 90 || lng < -180 || lng > 180) {
-                return res.status(400).json({
-                    error: 'Invalid coordinates in evacuation points'
-                });
+        // Validate evacuation points format if provided
+        if (evacuationPoints && Array.isArray(evacuationPoints) && evacuationPoints.length > 0) {
+            for (const point of evacuationPoints) {
+                if (!Array.isArray(point) || point.length !== 2) {
+                    return res.status(400).json({
+                        error: 'Each evacuation point must be an array of [lat, lng]'
+                    });
+                }
+                const [lat, lng] = point;
+                if (typeof lat !== 'number' || typeof lng !== 'number' ||
+                    lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+                    return res.status(400).json({
+                        error: 'Invalid coordinates in evacuation points'
+                    });
+                }
             }
         }
 
@@ -1477,28 +924,6 @@ app.post('/api/notifications/send', async (req, res) => {
 });
 
 // WhatsApp status endpoint
-
-/**
- * @swagger
- * /api/whatsapp/status:
- *   get:
- *     summary: Get WhatsApp connection status
- *     description: Check if WhatsApp client is initialized and authenticated
- *     tags: [WhatsApp]
- *     responses:
- *       200:
- *         description: WhatsApp status retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/WhatsAppStatusResponse'
- *       500:
- *         description: Internal server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- */
 app.get('/api/whatsapp/status', (req, res) => {
     try {
         const status = getWhatsAppStatus();
@@ -1514,28 +939,6 @@ app.get('/api/whatsapp/status', (req, res) => {
 });
 
 // WhatsApp QR code endpoint
-
-/**
- * @swagger
- * /api/whatsapp/qr:
- *   get:
- *     summary: Get WhatsApp QR code
- *     description: Retrieve QR code for WhatsApp authentication. Returns null if already authenticated.
- *     tags: [WhatsApp]
- *     responses:
- *       200:
- *         description: QR code retrieved successfully or not needed
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/WhatsAppQRResponse'
- *       500:
- *         description: Internal server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- */
 app.get('/api/whatsapp/qr', (req, res) => {
     try {
         const qrCode = getQRCode();
@@ -1558,33 +961,6 @@ app.get('/api/whatsapp/qr', (req, res) => {
 });
 
 // Initialize WhatsApp endpoint
-
-/**
- * @swagger
- * /api/whatsapp/initialize:
- *   post:
- *     summary: Initialize WhatsApp client
- *     description: Initialize and authenticate WhatsApp client for sending notifications
- *     tags: [WhatsApp]
- *     requestBody:
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/InitializeWhatsAppDto'
- *     responses:
- *       200:
- *         description: WhatsApp client initialized successfully
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/InitializeWhatsAppResponse'
- *       500:
- *         description: Internal server error
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- */
 app.post('/api/whatsapp/initialize', async (req, res) => {
     try {
         const { groupName } = req.body;
