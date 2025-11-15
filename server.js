@@ -254,6 +254,7 @@ function rowToGeoJSON(row) {
             coordinates: [row.longitude, row.latitude]
         },
         properties: {
+            id: row.id,
             timestamp_detected: row.timestamp_detected,
             last_update: row.last_update,
             fire_status: row.fire_status,
