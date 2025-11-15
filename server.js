@@ -854,7 +854,6 @@ app.post('/api/notifications/send', async (req, res) => {
 
         const results = {
             telegram: null,
-            whatsapp: null,
             errors: []
         };
 
@@ -878,33 +877,8 @@ app.post('/api/notifications/send', async (req, res) => {
             }
         }
 
-        // Send to WhatsApp if configured
-        const whatsappGroupName = process.env.WHATSAPP_GROUP_NAME;
-        const whatsappPhoneNumber = process.env.WHATSAPP_PHONE_NUMBER;
-
-        if (whatsappGroupName || whatsappPhoneNumber) {
-            try {
-                // Initialize WhatsApp client if not already initialized
-                const whatsappStatus = getWhatsAppStatus();
-                if (!whatsappStatus.hasClient || !whatsappStatus.isLoggedIn) {
-                    await initializeWhatsAppClient(whatsappGroupName);
-                }
-
-                const whatsappResult = await sendWhatsAppNotification(
-                    message,
-                    evacuationPoints,
-                    location,
-                    whatsappPhoneNumber
-                );
-                results.whatsapp = whatsappResult;
-            } catch (error) {
-                console.error('WhatsApp notification error:', error);
-                results.errors.push({ service: 'whatsapp', error: error.message });
-            }
-        }
-
         // Return success if at least one service succeeded
-        if (results.telegram || results.whatsapp) {
+        if (results.telegram) {
             res.json({
                 success: true,
                 message: 'Notification sent successfully',
@@ -919,59 +893,6 @@ app.post('/api/notifications/send', async (req, res) => {
         }
     } catch (error) {
         console.error('Notification send error:', error);
-        res.status(500).json({
-            error: error.message || 'Internal server error'
-        });
-    }
-});
-
-// WhatsApp status endpoint
-app.get('/api/whatsapp/status', (req, res) => {
-    try {
-        const status = getWhatsAppStatus();
-        res.json({
-            success: true,
-            status
-        });
-    } catch (error) {
-        res.status(500).json({
-            error: error.message || 'Internal server error'
-        });
-    }
-});
-
-// WhatsApp QR code endpoint
-app.get('/api/whatsapp/qr', (req, res) => {
-    try {
-        const qrCode = getQRCode();
-        if (qrCode) {
-            res.json({
-                success: true,
-                qrCode
-            });
-        } else {
-            res.json({
-                success: false,
-                message: 'No QR code available. WhatsApp may already be authenticated.'
-            });
-        }
-    } catch (error) {
-        res.status(500).json({
-            error: error.message || 'Internal server error'
-        });
-    }
-});
-
-// Initialize WhatsApp endpoint
-app.post('/api/whatsapp/initialize', async (req, res) => {
-    try {
-        const { groupName } = req.body;
-        await initializeWhatsAppClient(groupName || process.env.WHATSAPP_GROUP_NAME);
-        res.json({
-            success: true,
-            message: 'WhatsApp client initialized'
-        });
-    } catch (error) {
         res.status(500).json({
             error: error.message || 'Internal server error'
         });
