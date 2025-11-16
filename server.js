@@ -766,6 +766,46 @@ app.patch('/api/fires/:id', (req, res) => {
 
 /**
  * @swagger
+ * /api/fires:
+ *   delete:
+ *     summary: Delete all fire incidents
+ *     description: Permanently delete all fire incidents from the database. Used before generating a new set of fires.
+ *     tags: [Fires]
+ *     responses:
+ *       200:
+ *         description: All fire incidents deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 deletedCount:
+ *                   type: integer
+ *       500:
+ *         description: Database error
+ */
+// DELETE all fires
+app.delete('/api/fires', (req, res) => {
+    db.run('DELETE FROM fires', [], function(err) {
+        if (err) {
+            console.error('Error deleting all fires:', err);
+            return res.status(500).json({ error: 'Database error' });
+        }
+
+        res.json({
+            success: true,
+            message: `Deleted ${this.changes} fire(s) from database`,
+            deletedCount: this.changes
+        });
+    });
+});
+
+/**
+ * @swagger
  * /api/fires/{id}:
  *   delete:
  *     summary: Delete fire incident
@@ -795,7 +835,7 @@ app.patch('/api/fires/:id', (req, res) => {
  *       500:
  *         description: Database error
  */
-// DELETE fire
+// DELETE fire by id
 app.delete('/api/fires/:id', (req, res) => {
     const { id } = req.params;
 
